@@ -33,12 +33,11 @@
         #interactive-bg {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             z-index: -1;
-            /* Spotlight effect remains, but adjusted for the galaxy feel */
             background-image: radial-gradient(circle 600px at var(--mouse-x, -600px) var(--mouse-y, -600px), rgba(0, 255, 255, 0.08), transparent 80%);
         }
         .dot {
             position: absolute;
-            background-color: var(--text-primary); /* Brighter stars */
+            background-color: var(--text-primary);
             border-radius: 50%;
             opacity: 0.8;
             transition: transform 0.2s ease-out, background-color 0.2s ease-out, box-shadow 0.2s ease-out;
@@ -49,25 +48,32 @@
 
         /* --- CUSTOM CURSOR (BLACK HOLE) --- */
         #cursor {
-            position: fixed; width: 60px; height: 60px; /* Larger black hole */
+            position: fixed; width: 60px; height: 60px;
             border-radius: 50%;
-            /* Black hole gradient with an intense cyan accretion disk */
             background: radial-gradient(circle at center,
-            #000000 0%, /* Absolute black center */
-            #000000 20%, /* Solid black core */
-            rgba(0, 255, 255, 0.8) 30%, /* Inner accretion disk */
-            rgba(0, 255, 255, 0.4) 45%, /* Outer accretion disk */
-            transparent 70% /* Fade to transparent */
+            #000000 0%, #000000 20%,
+            rgba(0, 255, 255, 0.8) 30%,
+            rgba(0, 255, 255, 0.4) 45%,
+            transparent 70%
             );
-            filter: blur(0.5px); /* Soften edges */
+            filter: blur(0.5px);
             pointer-events: none; z-index: 9999;
             transform: translate(-50%, -50%);
             transition: transform 0.15s ease-out;
-            box-shadow: 0 0 40px rgba(0, 255, 255, 0.5), /* Intense glow */
-            0 0 80px rgba(0, 255, 255, 0.2); /* Wider glow */
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.5), 0 0 80px rgba(0, 255, 255, 0.2);
         }
         body:hover #cursor { opacity: 1; }
-        #cursor.hovered { transform: translate(-50%, -50%) scale(1.3); } /* Slightly larger on hover */
+        #cursor.hovered { transform: translate(-50%, -50%) scale(1.3); }
+
+        /* ⭐ CSS FIX: Hide custom cursor on touch devices */
+        @media (pointer: coarse) {
+            #cursor {
+                display: none;
+            }
+            body {
+                cursor: auto;
+            }
+        }
 
         /* --- GENERAL LAYOUT & TYPOGRAPHY --- */
         .container { max-width: 1000px; margin: 0 auto; padding: 120px 20px; }
@@ -90,8 +96,6 @@
             color: var(--text-primary);
             position: relative;
         }
-
-        /* Glitch effect styling (static part) */
         .hero-title::before,
         .hero-title::after {
             content: attr(data-text);
@@ -101,20 +105,16 @@
             overflow: hidden;
             color: var(--text-primary);
         }
-
-        /* Glitch effect animation ON HOVER */
         .hero-title:hover::before {
             left: 2px;
             text-shadow: -2px 0 var(--primary-accent);
             animation: text-glitch 0.8s infinite alternate-reverse;
         }
-
         .hero-title:hover::after {
             left: -2px;
             text-shadow: -2px 0 red, 2px 2px var(--primary-accent);
             animation: text-glitch 0.8s infinite alternate-reverse;
         }
-
         @keyframes text-glitch {
             0% { clip-path: inset(80% 0 0 0); } 20% { clip-path: inset(10% 0 80% 0); }
             40% { clip-path: inset(90% 0 0 0); } 60% { clip-path: inset(0 0 90% 0); }
@@ -375,59 +375,58 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // --- INTERACTIVE DOT GRID & SPOTLIGHT (MODIFIED) ---
         const bg = document.getElementById('interactive-bg');
-        const numDots = 1500; // Increased dots for a denser galaxy
+        const cursor = document.getElementById('cursor');
+        const magneticButtons = document.querySelectorAll('.magnetic-button');
+        const hoverables = document.querySelectorAll('a, summary, .card, .hero-title, button');
+
+        // --- INTERACTIVE DOT GRID SETUP ---
+        const numDots = 1500;
         const dots = [];
-        const blackHoleRadius = 150; // Increased influence radius of the black hole
-        const warpStrength = 50; // How much the dots move
+        const blackHoleRadius = 150;
+        const warpStrength = 50;
 
         for (let i = 0; i < numDots; i++) {
             const dot = document.createElement('div');
             dot.classList.add('dot');
-
-            // Randomize dot size for a star-field effect
             const size = Math.random();
             if (size < 0.6) dot.classList.add('small');
             else if (size < 0.9) dot.classList.add('medium');
             else dot.classList.add('large');
-
             dot.style.left = `${Math.random() * 100}%`;
             dot.style.top = `${Math.random() * 100}%`;
             bg.appendChild(dot);
             dots.push(dot);
         }
 
-        window.addEventListener('mousemove', e => {
-            const { clientX, clientY } = e;
+        // --- UNIFIED FUNCTION FOR MOUSE & TOUCH ---
+        // This function handles all the logic that needs to run when the user moves their mouse or finger.
+        function handleInteractionMove(clientX, clientY) {
+            // Update Spotlight Background
             bg.style.setProperty('--mouse-x', `${clientX}px`);
             bg.style.setProperty('--mouse-y', `${clientY}px`);
 
+            // Update Cursor Position (will be hidden on mobile by CSS)
+            cursor.style.left = `${clientX}px`;
+            cursor.style.top = `${clientY}px`;
+
+            // Update Dot Interaction
             dots.forEach(dot => {
                 const rect = dot.getBoundingClientRect();
                 const dotX = rect.left + rect.width / 2;
                 const dotY = rect.top + rect.height / 2;
-
                 const dx = clientX - dotX;
                 const dy = clientY - dotY;
                 const dist = Math.sqrt(dx * dx + dy * dy);
-
-                // Calculate force based on distance, creating a stronger pull closer to the black hole
                 let force = 0;
                 if (dist < blackHoleRadius) {
                     force = Math.max(0, (blackHoleRadius - dist) / blackHoleRadius);
-
-                    // Inverse square law-like effect for stronger pull close in
                     force = Math.pow(force, 1.5) * warpStrength;
                 }
-
-                const newX = -dx * force / dist || 0; // Avoid division by zero
-                const newY = -dy * force / dist || 0; // Avoid division by zero
-
+                const newX = -dx * force / dist || 0;
+                const newY = -dy * force / dist || 0;
                 dot.style.transform = `translate(${newX}px, ${newY}px)`;
-
-                // Change color/glow near the black hole
-                if (dist < blackHoleRadius * 0.7) { // Brighter closer to center
+                if (dist < blackHoleRadius * 0.7) {
                     dot.style.backgroundColor = 'var(--primary-accent)';
                     dot.style.boxShadow = `0 0 10px var(--primary-accent)`;
                 } else if (dist < blackHoleRadius) {
@@ -438,25 +437,40 @@
                     dot.style.boxShadow = 'none';
                 }
             });
-        });
+        }
 
+        // --- ADD EVENT LISTENERS FOR BOTH MOUSE AND TOUCH ---
 
-        // --- CUSTOM CURSOR & MAGNETIC BUTTONS ---
-        const cursor = document.getElementById('cursor');
-        const magneticButtons = document.querySelectorAll('.magnetic-button');
-        const hoverables = document.querySelectorAll('a, summary, .card, .hero-title, button');
-
+        // Listen for mouse movement
         window.addEventListener('mousemove', e => {
-            cursor.style.left = `${e.clientX}px`;
-            cursor.style.top = `${e.clientY}px`;
+            handleInteractionMove(e.clientX, e.clientY);
         });
 
+        // Listen for touch start (to capture the initial position)
+        window.addEventListener('touchstart', e => {
+            if (e.touches.length > 0) {
+                const touch = e.touches[0];
+                handleInteractionMove(touch.clientX, touch.clientY);
+            }
+        }, { passive: true }); // Use passive for better scroll performance
+
+        // Listen for touch movement
+        window.addEventListener('touchmove', e => {
+            if (e.touches.length > 0) {
+                const touch = e.touches[0];
+                handleInteractionMove(touch.clientX, touch.clientY);
+            }
+        }, { passive: true });
+
+
+        // --- MAGNETIC BUTTONS & CURSOR HOVER ---
         hoverables.forEach(el => {
             el.addEventListener('mouseenter', () => cursor.classList.add('hovered'));
             el.addEventListener('mouseleave', () => cursor.classList.remove('hovered'));
         });
 
         magneticButtons.forEach(button => {
+            // For mouse
             button.addEventListener('mousemove', function(e) {
                 const rect = this.getBoundingClientRect();
                 const x = e.clientX - rect.left - rect.width / 2;
@@ -464,6 +478,14 @@
                 this.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px)`;
             });
             button.addEventListener('mouseleave', function() {
+                this.style.transform = 'translate(0,0)';
+            });
+
+            // Add touch listeners to reset the button when the touch ends
+            button.addEventListener('touchend', function() {
+                this.style.transform = 'translate(0,0)';
+            });
+            button.addEventListener('touchcancel', function() {
                 this.style.transform = 'translate(0,0)';
             });
         });
@@ -495,5 +517,6 @@
         });
     });
 </script>
+
 </body>
 </html>
