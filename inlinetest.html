@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glitch 1.0 | Protocol Initialized</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #000000;
+            --primary-accent: #00FFFF; /* Electric Cyan */
+            --text-primary: #FFFFFF;
+            --text-secondary: #888888;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --font-main: 'Inter', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg);
+            color: var(--text-secondary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        /* --- INTERACTIVE DOTS (MODIFIED FOR GALAXY LOOK) --- */
+        #interactive-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            /* Spotlight effect remains, but adjusted for the galaxy feel */
+            background-image: radial-gradient(circle 600px at var(--mouse-x, -600px) var(--mouse-y, -600px), rgba(0, 255, 255, 0.08), transparent 80%);
+        }
+        .dot {
+            position: absolute;
+            background-color: var(--text-primary); /* Brighter stars */
+            border-radius: 50%;
+            opacity: 0.8;
+            transition: transform 0.2s ease-out, background-color 0.2s ease-out, box-shadow 0.2s ease-out;
+        }
+        .dot.small { width: 1px; height: 1px; opacity: 0.6; }
+        .dot.medium { width: 2px; height: 2px; opacity: 0.8; }
+        .dot.large { width: 3px; height: 3px; opacity: 1; box-shadow: 0 0 5px var(--primary-accent); }
+
+        /* --- CUSTOM CURSOR (BLACK HOLE) --- */
+        #cursor {
+            position: fixed; width: 60px; height: 60px; /* Larger black hole */
+            border-radius: 50%;
+            /* Black hole gradient with an intense cyan accretion disk */
+            background: radial-gradient(circle at center,
+            #000000 0%, /* Absolute black center */
+            #000000 20%, /* Solid black core */
+            rgba(0, 255, 255, 0.8) 30%, /* Inner accretion disk */
+            rgba(0, 255, 255, 0.4) 45%, /* Outer accretion disk */
+            transparent 70% /* Fade to transparent */
+            );
+            filter: blur(0.5px); /* Soften edges */
+            pointer-events: none; z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: transform 0.15s ease-out;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.5), /* Intense glow */
+            0 0 80px rgba(0, 255, 255, 0.2); /* Wider glow */
+        }
+        body:hover #cursor { opacity: 1; }
+        #cursor.hovered { transform: translate(-50%, -50%) scale(1.3); } /* Slightly larger on hover */
+
+        /* --- GENERAL LAYOUT & TYPOGRAPHY --- */
+        .container { max-width: 1000px; margin: 0 auto; padding: 120px 20px; }
+        h1, h2, h3 { font-weight: 700; color: var(--text-primary); }
+        h1 { font-size: clamp(3rem, 10vw, 7rem); font-weight: 900; letter-spacing: -0.05em; line-height: 1; }
+        h2 { font-size: 2.5rem; text-align: center; margin-bottom: 20px; letter-spacing: -0.02em; }
+        p { max-width: 600px; }
+        .section-subtitle { text-align: center; margin: 0 auto 60px auto; }
+
+        /* --- HERO SECTION --- */
+        #hero {
+            min-height: 100vh; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center;
+        }
+        .hero-title {
+            font-size: clamp(3rem, 10vw, 7rem);
+            font-weight: 900;
+            letter-spacing: -0.05em;
+            line-height: 1;
+            color: var(--text-primary);
+            position: relative;
+        }
+
+        /* Glitch effect styling (static part) */
+        .hero-title::before,
+        .hero-title::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            color: var(--text-primary);
+        }
+
+        /* Glitch effect animation ON HOVER */
+        .hero-title:hover::before {
+            left: 2px;
+            text-shadow: -2px 0 var(--primary-accent);
+            animation: text-glitch 0.8s infinite alternate-reverse;
+        }
+
+        .hero-title:hover::after {
+            left: -2px;
+            text-shadow: -2px 0 red, 2px 2px var(--primary-accent);
+            animation: text-glitch 0.8s infinite alternate-reverse;
+        }
+
+        @keyframes text-glitch {
+            0% { clip-path: inset(80% 0 0 0); } 20% { clip-path: inset(10% 0 80% 0); }
+            40% { clip-path: inset(90% 0 0 0); } 60% { clip-path: inset(0 0 90% 0); }
+            80% { clip-path: inset(70% 0 10% 0); } 100% { clip-path: inset(20% 0 70% 0); }
+        }
+
+        /* --- MAGNETIC CTA BUTTON --- */
+        .magnetic-button {
+            display: inline-block; position: relative;
+            background-color: var(--primary-accent);
+            color: var(--bg); padding: 16px 40px; border-radius: 100px;
+            text-decoration: none; font-weight: 600;
+            margin-top: 40px; transition: transform 0.3s cubic-bezier(0.2, 1, 0.8, 1);
+        }
+
+        /* --- CONTENT SECTIONS & CARDS --- */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
+        .card {
+            background: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.3));
+            border: 1px solid var(--border-color); border-radius: 16px;
+            padding: 30px; position: relative; overflow: hidden;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+        .card:hover { transform: translateY(-5px); background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.4)); }
+        .card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, transparent, rgba(255,255,255,0.05), transparent);
+            transform: translateX(-100%); transition: transform 0.5s ease;
+        }
+        .card:hover::before { transform: translateX(100%); }
+        .card h3 { font-size: 1.25rem; }
+        .card strong { color: var(--primary-accent); font-weight: 600; }
+        .card .icon { font-size: 2rem; margin-bottom: 10px; color: var(--primary-accent); }
+
+        /* --- HORIZONTAL TIMELINE --- */
+        .timeline-wrapper { overflow-x: auto; padding-bottom: 20px; }
+        .timeline-wrapper::-webkit-scrollbar { height: 4px; }
+        .timeline-wrapper::-webkit-scrollbar-track { background: var(--border-color); }
+        .timeline-wrapper::-webkit-scrollbar-thumb { background: var(--primary-accent); }
+        .timeline { display: flex; width: max-content; padding: 20px 0; gap: 40px; position: relative; }
+        .timeline::before { content: ''; position: absolute; top: 37px; left: 0; height: 2px; width: 100%; background: var(--border-color); }
+        .timeline-item { min-width: 250px; text-align: left; position: relative; padding-top: 40px; }
+        .timeline-marker {
+            position: absolute; top: 28px; left: 0; width: 20px; height: 20px;
+            background: var(--bg); border: 2px solid var(--text-secondary);
+            border-radius: 50%; transition: all 0.3s ease;
+        }
+        .timeline-item.is-visible .timeline-marker { border-color: var(--primary-accent); background: var(--primary-accent); transform: scale(1.2); }
+        .timeline-item h3 { font-size: 1.1rem; }
+        .timeline-item p { font-size: 0.9rem; margin: 0; max-width: none; }
+
+        /* --- Mentors Section --- */
+        .mentor-card { text-align: center; }
+        .mentor-card img {
+            width: 120px; height: 120px; border-radius: 50%;
+            border: 3px solid var(--primary-accent); object-fit: cover;
+            margin-bottom: 15px; transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .mentor-card img:hover { transform: translateY(-5px) scale(1.05); box-shadow: 0 0 20px var(--primary-accent); }
+        .mentor-card h3 { font-size: 1.1rem; margin-bottom: 5px; }
+        .mentor-card p { font-size: 0.85rem; }
+
+        /* --- Sponsors Section --- */
+        .sponsors-grid {
+            display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+            gap: 40px; padding-top: 40px;
+        }
+        .sponsor-logo {
+            height: 50px; width: auto; max-width: 180px;
+            filter: grayscale(100%) brightness(0.6);
+            transition: filter 0.3s ease, transform 0.3s ease;
+        }
+        .sponsor-logo:hover { filter: grayscale(0%) brightness(1); transform: scale(1.1); }
+
+        /* --- FAQ Section --- */
+        .faq-item {
+            background: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.2));
+            border: 1px solid var(--border-color); border-radius: 12px;
+            margin-bottom: 15px; overflow: hidden;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+        .faq-item:hover { background: linear-gradient(rgba(0,0,0,0.15), rgba(0,0,0,0.25)); border-color: var(--primary-accent); }
+        .faq-item summary {
+            padding: 20px 25px; cursor: pointer;
+            font-weight: 500; color: var(--text-primary);
+            list-style: none; display: flex; justify-content: space-between; align-items: center;
+        }
+        .faq-item summary::-webkit-details-marker { display: none; }
+        .faq-item summary::after { content: '+'; font-size: 1.5rem; color: var(--primary-accent); transition: transform 0.3s ease; }
+        .faq-item[open] summary::after { content: '—'; transform: rotate(180deg); }
+        .faq-item div {
+            padding: 0 25px 20px;
+            font-size: 0.95rem;
+            max-height: 0; overflow: hidden;
+            transition: max-height 0.4s ease-out;
+        }
+        .faq-item[open] div { max-height: 200px; }
+
+        /* --- FOOTER --- */
+        footer { text-align: center; border-top: 1px solid var(--border-color); padding: 40px 20px; }
+        footer a { color: var(--primary-accent); text-decoration: none; }
+        .made-by { margin-top: 20px; font-size: 0.85rem; color: var(--text-secondary); }
+
+        /* --- SCROLL ANIMATION --- */
+        .fade-in { opacity: 0; transform: translateY(30px); transition: opacity 0.8s cubic-bezier(0.2, 1, 0.8, 1), transform 0.8s cubic-bezier(0.2, 1, 0.8, 1); }
+        .fade-in.is-visible { opacity: 1; transform: translateY(0); }
+
+        /* --- RESPONSIVE DESIGN --- */
+        @media (max-width: 768px) {
+            h1, .hero-title { font-size: clamp(3rem, 12vw, 5rem); }
+            h2 { font-size: 2rem; }
+            .container { padding: 80px 15px; }
+            .grid { grid-template-columns: 1fr; }
+            .about-text { order: 1; }
+            .timeline-wrapper { padding-left: 0; padding-right: 0; }
+            .timeline { gap: 20px; padding: 20px 0 20px 20px; }
+            .timeline::before { left: 10px; }
+            .timeline-item { min-width: 200px; padding-left: 40px; }
+            .timeline-marker { left: 0; }
+            .mentor-card img { width: 100px; height: 100px; }
+            .sponsors-grid { gap: 20px; }
+            .sponsor-logo { height: 40px; max-width: 120px; }
+            .faq-item summary { padding: 15px 20px; }
+            .faq-item div { padding: 0 20px 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="interactive-bg"></div>
+<div id="cursor"></div>
+
+<section id="hero">
+    <h1 class="hero-title" data-text="Glitch 1.0">Glitch 1.0</h1>
+    <p class="section-subtitle fade-in" style="max-width: 500px; transition-delay: 0.5s;">
+        A 3-hour hyper-sprint where code meets chaos. Hosted by Techpreneur Club, Amity University Patna.
+    </p>
+    <a href="#register" class="magnetic-button fade-in" style="transition-delay: 0.8s;">INITIATE REGISTRATION ></a>
+</section>
+
+<section id="about">
+    <div class="container">
+        <div class="grid" style="align-items: center;">
+            <div class="about-text fade-in">
+                <h2 style="text-align: left;">Protocol: Glitch</h2>
+                <p>This isn't just another hackathon. It's a protocol designed to push your limits. In <strong>180 minutes</strong>, you will ideate, develop, and deploy a functional prototype. We provide the framework; you provide the ingenuity. The goal is simple: find the opportunity within the chaos and build something impactful.</p>
+            </div>
+            <div class="card fade-in" style="transition-delay: 0.2s;">
+                <h3>/PARAMETERS</h3>
+                <p><strong>DATE:</strong> October 26, 2025</p>
+                <p><strong>VENUE:</strong> Amity University Patna</p>
+                <p><strong>TEAM SIZE:</strong> 1-2 Operators</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="timeline-section">
+    <div class="container">
+        <h2 class="fade-in">Execution Sequence</h2>
+        <p class="section-subtitle fade-in">Key operational waypoints. Stay synchronized.</p>
+        <div class="timeline-wrapper fade-in">
+            <div class="timeline">
+                <div class="timeline-item"> <div class="timeline-marker"></div> <h3>10:00 - AUTHENTICATE</h3> <p>Check-in & System Briefing</p> </div>
+                <div class="timeline-item"> <div class="timeline-marker"></div> <h3>11:00 - EXECUTE</h3> <p>3-Hour Development Sprint Begins</p> </div>
+                <div class="timeline-item"> <div class="timeline-marker"></div> <h3>14:00 - COMPILE</h3> <p>Code Freeze & Submission</p> </div>
+                <div class="timeline-item"> <div class="timeline-marker"></div> <h3>14:15 - DEMONSTRATE</h3> <p>Live Project Demos to Panel</p> </div>
+                <div class="timeline-item"> <div class="timeline-marker"></div> <h3>15:30 - RESOLVE</h3> <p>Awards & Debrief</p> </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="categories">
+    <div class="container">
+        <h2 class="fade-in">Operation Sectors</h2>
+        <p class="section-subtitle fade-in">Select your domain of impact and deploy your solution.</p>
+        <div class="grid">
+            <div class="card fade-in"><div class="icon">💻</div> <h3>Cybersecurity Protocols</h3> <p>Develop defenses against digital threats.</p></div>
+            <div class="card fade-in" style="transition-delay: 0.1s;"><div class="icon">🌱</div> <h3>Eco-Innovation Systems</h3> <p>Solutions for environmental sustainability.</p></div>
+            <div class="card fade-in" style="transition-delay: 0.2s;"><div class="icon">🧠</div> <h3>AI & Machine Learning</h3> <p>Leverage intelligence for data solutions.</p></div>
+            <div class="card fade-in" style="transition-delay: 0.3s;"><div class="icon">🩺</div> <h3>Health & Wellness</h3> <p>Innovate for better public health.</p></div>
+            <div class="card fade-in" style="transition-delay: 0.4s;"><div class="icon">🎓</div> <h3>Educational Technology</h3> <p>Advance learning through digital tools.</p></div>
+            <div class="card fade-in" style="transition-delay: 0.5s;"><div class="icon">🎮</div> <h3>Gaming & Entertainment</h3> <p>Craft engaging user experiences.</p></div>
+        </div>
+    </div>
+</section>
+
+<section id="directives">
+    <div class="container">
+        <h2 class="fade-in">Primary Directives</h2>
+        <p class="section-subtitle fade-in">Your project will be evaluated on these core metrics.</p>
+        <div class="grid">
+            <div class="card fade-in"><h3 style="color: var(--primary-accent);">01. INGENUITY</h3><p>How original and creative is the core concept? Does it solve a problem in a novel way?</p></div>
+            <div class="card fade-in" style="transition-delay: 0.2s;"><h3 style="color: var(--primary-accent);">02. IMPACT</h3><p>What is the potential positive effect of the project? Is it useful, helpful, or entertaining?</p></div>
+            <div class="card fade-in" style="transition-delay: 0.4s;"><h3 style="color: var(--primary-accent);">03. EXECUTION</h3><p>How well was the prototype built within the time limit? Is the demo functional and clear?</p></div>
+        </div>
+    </div>
+</section>
+
+<section id="mentors">
+    <div class="container">
+        <h2 class="fade-in">Advisory Council</h2>
+        <p class="section-subtitle fade-in">Expert operators providing guidance and tactical support.</p>
+        <div class="grid">
+            <div class="card mentor-card fade-in"><img src="https://i.pravatar.cc/150?img=68" alt="Mentor Akash"><h3>Akash Sharma</h3><p>Lead Engineer, Quantum Labs</p></div>
+            <div class="card mentor-card fade-in" style="transition-delay: 0.1s;"><img src="https://i.pravatar.cc/150?img=60" alt="Mentor Hariom"><h3>Hariom</h3><p>Founder, Glitch Systems</p></div>
+            <div class="card mentor-card fade-in" style="transition-delay: 0.2s;"><img src="https://i.pravatar.cc/150?img=60" alt="Mentor Hariom"><h3>Hariom</h3><p>Founder, Glitch Systems</p></div>
+            <div class="card mentor-card fade-in" style="transition-delay: 0.3s;"><img src="https://i.pravatar.cc/150?img=69" alt="Mentor Simran"><h3>Simran Kaur</h3><p>AI Architect, NeuralNet</p></div>
+            <div class="card mentor-card fade-in" style="transition-delay: 0.4s;"><img src="https://i.pravatar.cc/150?img=70" alt="Mentor Rohan"><h3>Rohan Varma</h3><p>Product Manager, ByteWorks</p></div>
+            <div class="card mentor-card fade-in" style="transition-delay: 0.5s;"><img src="https://i.pravatar.cc/150?img=71" alt="Mentor Priya"><h3>Priya Devi</h3><p>Cybersecurity Specialist, ShieldSec</p></div>
+        </div>
+    </div>
+</section>
+
+<section id="sponsors">
+    <div class="container">
+        <h2 class="fade-in">Strategic Partners</h2>
+        <p class="section-subtitle fade-in">Our mission is empowered by these key alliances.</p>
+        <div class="sponsors-grid fade-in">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Google_Chrome_logo_%282011%29.svg/1200px-Google_Chrome_logo_%282011%29.svg.png" alt="Google Chrome Logo" class="sponsor-logo">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Microsoft_Azure.svg/1200px-Microsoft_Azure.svg.png" alt="Microsoft Azure Logo" class="sponsor-logo">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Electron_Software_Framework_Logo.svg/1200px-Electron_Software_Framework_Logo.svg.png" alt="Electron Logo" class="sponsor-logo">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/CSS3_logo_and_wordmark.svg/1200px-CSS3_logo_and_wordmark.svg.png" alt="CSS3 Logo" class="sponsor-logo">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/MongoDB_Logo.svg/1200px-MongoDB_Logo.svg.png" alt="MongoDB Logo" class="sponsor-logo">
+        </div>
+    </div>
+</section>
+
+<section id="faq">
+    <div class="container">
+        <h2 class="fade-in">FAQ / DECRYPTED</h2>
+        <p class="section-subtitle fade-in">Common queries, direct answers.</p>
+        <div class="fade-in">
+            <details class="faq-item"><summary>Who can participate?</summary><div><p>All enrolled university students are eligible. Teams of 1-2 operators. Solo participants can find a teammate during the initial phase.</p></div></details>
+            <details class="faq-item"><summary>What should I bring?</summary><div><p>Your primary workstation (laptop), charger, and any specialized peripherals. Stable network access and power units will be provided.</p></div></details>
+            <details class="faq-item"><summary>Is coding experience required?</summary><div><p>No formal pre-requisites. A basic understanding of coding is beneficial, but enthusiasm and a willingness to learn are paramount.</p></div></details>
+            <details class="faq-item"><summary>Will food be provided?</summary><div><p>Affirmative. Nutritional support and hydration stations will be available throughout the operational period.</p></div></details>
+        </div>
+    </div>
+</section>
+
+<section id="register">
+    <div class="container" style="text-align: center;">
+        <h2 class="fade-in">Join the Protocol.</h2>
+        <p class="section-subtitle fade-in">Registration is open. Limited slots available. Your terminal awaits.</p>
+        <a href="#" class="magnetic-button fade-in" style="font-size: 1.25rem;">REGISTER_NOW</a>
+    </div>
+</section>
+
+<footer>
+    <div class="container" style="padding-top: 40px; padding-bottom: 40px;">
+        <p>A <a href="#">Techpreneur Club</a> Initiative at Amity University Patna.</p>
+        <p style="font-size: 0.9rem;">All systems operational. Last updated: September 8, 2025.</p>
+        <p class="made-by">Made by Hariom Sharnam</p>
+    </div>
+</footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- INTERACTIVE DOT GRID & SPOTLIGHT (MODIFIED) ---
+        const bg = document.getElementById('interactive-bg');
+        const numDots = 1500; // Increased dots for a denser galaxy
+        const dots = [];
+        const blackHoleRadius = 150; // Increased influence radius of the black hole
+        const warpStrength = 50; // How much the dots move
+
+        for (let i = 0; i < numDots; i++) {
+            const dot = document.createElement('div');
+            dot.classList.add('dot');
+
+            // Randomize dot size for a star-field effect
+            const size = Math.random();
+            if (size < 0.6) dot.classList.add('small');
+            else if (size < 0.9) dot.classList.add('medium');
+            else dot.classList.add('large');
+
+            dot.style.left = `${Math.random() * 100}%`;
+            dot.style.top = `${Math.random() * 100}%`;
+            bg.appendChild(dot);
+            dots.push(dot);
+        }
+
+        window.addEventListener('mousemove', e => {
+            const { clientX, clientY } = e;
+            bg.style.setProperty('--mouse-x', `${clientX}px`);
+            bg.style.setProperty('--mouse-y', `${clientY}px`);
+
+            dots.forEach(dot => {
+                const rect = dot.getBoundingClientRect();
+                const dotX = rect.left + rect.width / 2;
+                const dotY = rect.top + rect.height / 2;
+
+                const dx = clientX - dotX;
+                const dy = clientY - dotY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                // Calculate force based on distance, creating a stronger pull closer to the black hole
+                let force = 0;
+                if (dist < blackHoleRadius) {
+                    force = Math.max(0, (blackHoleRadius - dist) / blackHoleRadius);
+
+                    // Inverse square law-like effect for stronger pull close in
+                    force = Math.pow(force, 1.5) * warpStrength;
+                }
+
+                const newX = -dx * force / dist || 0; // Avoid division by zero
+                const newY = -dy * force / dist || 0; // Avoid division by zero
+
+                dot.style.transform = `translate(${newX}px, ${newY}px)`;
+
+                // Change color/glow near the black hole
+                if (dist < blackHoleRadius * 0.7) { // Brighter closer to center
+                    dot.style.backgroundColor = 'var(--primary-accent)';
+                    dot.style.boxShadow = `0 0 10px var(--primary-accent)`;
+                } else if (dist < blackHoleRadius) {
+                    dot.style.backgroundColor = 'var(--text-primary)';
+                    dot.style.boxShadow = `0 0 5px var(--text-primary)`;
+                } else {
+                    dot.style.backgroundColor = 'var(--text-secondary)';
+                    dot.style.boxShadow = 'none';
+                }
+            });
+        });
+
+
+        // --- CUSTOM CURSOR & MAGNETIC BUTTONS ---
+        const cursor = document.getElementById('cursor');
+        const magneticButtons = document.querySelectorAll('.magnetic-button');
+        const hoverables = document.querySelectorAll('a, summary, .card, .hero-title, button');
+
+        window.addEventListener('mousemove', e => {
+            cursor.style.left = `${e.clientX}px`;
+            cursor.style.top = `${e.clientY}px`;
+        });
+
+        hoverables.forEach(el => {
+            el.addEventListener('mouseenter', () => cursor.classList.add('hovered'));
+            el.addEventListener('mouseleave', () => cursor.classList.remove('hovered'));
+        });
+
+        magneticButtons.forEach(button => {
+            button.addEventListener('mousemove', function(e) {
+                const rect = this.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                this.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px)`;
+            });
+            button.addEventListener('mouseleave', function() {
+                this.style.transform = 'translate(0,0)';
+            });
+        });
+
+        // --- SCROLL-TRIGGERED ANIMATIONS ---
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                }
+            });
+        }, { threshold: 0.15 });
+        document.querySelectorAll('.fade-in, .timeline-item').forEach(el => observer.observe(el));
+
+        // --- FAQ Accordion Functionality ---
+        document.querySelectorAll('.faq-item').forEach(details => {
+            const summary = details.querySelector('summary');
+            const content = summary.nextElementSibling;
+            summary.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (details.open) {
+                    content.style.maxHeight = '0';
+                    details.removeAttribute('open');
+                } else {
+                    details.setAttribute('open', '');
+                    content.style.maxHeight = content.scrollHeight + 'px';
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>
